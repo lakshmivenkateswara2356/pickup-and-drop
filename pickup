@@ -1,0 +1,87 @@
+inital Trip {
+    pickup: string[];
+    drop: string[];
+}
+
+initial Shipment {
+    pickups: string[];
+    drops: string[];
+}
+
+function istripv(trips: Trip[], shipment: Shipment): boolean {
+    const allPickupPoints = new Set(shipment.pickups);
+    const allDropPoints = new Set(shipment.drops);
+
+    // Ensure each point appears in at least one trip
+    for (const point of [...allPickupPoints, ...allDropPoints]) {
+        if (!trips.some(trip => trip.pickup.includes(point) || trip.drop.includes(point))) {
+            return false;
+        }
+    }
+
+    // Check trip consistency
+    for (const trip of trips) {
+        // Ensure valid pickup and drop points
+        for (const point of [...trip.pickup, ...trip.drop]) {
+            if (!allPickupPoints.has(point) && !allDropPoints.has(point)) {
+                return false;
+            }
+        }
+        // Ensure pickup points are visited before drop points
+        if (trip.pickup.some(pickup => trip.drop.includes(pickup))) {
+            return false;
+        }
+    }
+
+    // Avoid duplicate trips
+    const tripSet = new Set(trips.map(trip => JSON.stringify(trip)));
+    if (tripSet.size !== trips.length) {
+        return false;
+    }
+
+    // Confirm complete fulfillment
+    const visitedPickupPoints = new Set<string>();
+    const visitedDropPoints = new Set<string>();
+    for (const trip of trips) {
+        trip.pickup.forEach(pickup => visitedPickupPoints.add(pickup));
+        trip.drop.forEach(drop => visitedDropPoints.add(drop));
+    }
+    if (!setsEqual(visitedPickupPoints, allPickupPoints) || !setsEqual(visitedDropPoints, allDropPoints)) {
+        return false;
+    }
+
+    return true;
+}
+
+function setsEqual(setA: Set<any>, setB: Set<any>): boolean {
+    if (setA.size !== setB.size) {
+        return false;
+    }
+    for (const item of setA) {
+        if (!setB.has(item)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+]
+const shipment: Shipment = {
+    pickups: ['A', 'B'],
+    drops: ['C', 'D']
+};
+
+const trips1: Trip[] = [
+    { pickup: ['A', 'B'], drop: ['C', 'D'] },
+    { pickup: ['A'], drop: ['C'] },
+    { pickup: ['B'], drop: ['D'] }
+];
+
+const trips2: Trip[] = [
+    { pickup: ['A'], drop: ['C', 'D'] },
+    { pickup: ['A'], drop: ['C'] },
+    { pickup: ['B'], drop: ['C'] }
+];
+
+console.log('Trips 1 are valid:', isValidTrips(trips1, shipment)); // true
+console.log('Trips 2 are valid:', isValidTrips(trips2, shipment)); // false
